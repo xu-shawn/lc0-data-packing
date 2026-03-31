@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Initialize and update submodules
+echo "Initializing submodules..."
+git submodule update --init --recursive
+
 # Build binpack-rust
 echo "Building binpack-rust..."
 cd binpack-rust
