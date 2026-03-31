@@ -1,0 +1,11 @@
+.git
+.gitmodules
+data/
+binpacks/
+binpack-rust/target/
+lc0/build/
+lc0/.git/
+lc0/.circleci/
+*.binpack
+*.done
+*.tar

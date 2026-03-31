@@ -2,6 +2,32 @@
 
 set -e
 
+CURRENT_PID=""
+STOP_REQUESTED=0
+
+run_interruptible() {
+    "$@" &
+    CURRENT_PID=$!
+
+    local status=0
+    if ! wait "$CURRENT_PID"; then
+        status=$?
+    fi
+    CURRENT_PID=""
+    return "$status"
+}
+
+handle_signal() {
+    STOP_REQUESTED=1
+    if [ -n "$CURRENT_PID" ] && kill -0 "$CURRENT_PID" 2>/dev/null; then
+        kill "$CURRENT_PID" 2>/dev/null || true
+        wait "$CURRENT_PID" 2>/dev/null || true
+        CURRENT_PID=""
+    fi
+}
+
+trap 'handle_signal' INT TERM
+
 BASE_URL="https://storage.lczero.org/files/training_data/test91/"
 DATA_DIR="./data"
 BINPACK_DIR="./binpacks"
@@ -28,6 +54,11 @@ if [ -z "$TARBALLS" ]; then
 fi
 
 for TARBALL in $TARBALLS; do
+    if [ "$STOP_REQUESTED" -ne 0 ]; then
+        echo "Interrupted, stopping..."
+        exit 130
+    fi
+
     echo "============================================="
     echo "Processing $TARBALL..."
 
@@ -46,7 +77,7 @@ for TARBALL in $TARBALLS; do
     # Download only if missing
     if [ ! -f "$TAR_PATH" ]; then
         echo "Downloading ${TARBALL}..."
-        wget -c "${BASE_URL}${TARBALL}" -O "$TAR_PATH"
+        run_interruptible wget -c "${BASE_URL}${TARBALL}" -O "$TAR_PATH"
     else
         echo "Tar already exists, skipping download..."
     fi
@@ -54,13 +85,13 @@ for TARBALL in $TARBALLS; do
     # Extract only if missing
     if [ ! -d "$EXTRACT_PATH" ]; then
         echo "Extracting ${TARBALL}..."
-        tar -xf "$TAR_PATH" -C "$DATA_DIR"
+        run_interruptible tar -xf "$TAR_PATH" -C "$DATA_DIR"
     else
         echo "Already extracted, skipping..."
     fi
 
     echo "Running rescorer..."
-    "$RESCORER_BIN" rescore \
+    run_interruptible "$RESCORER_BIN" rescore \
         --syzygy-paths="$SYZYGY_PATH" \
         --input="$EXTRACT_PATH" \
         --binpack-file="$BINPACK_PATH" \
