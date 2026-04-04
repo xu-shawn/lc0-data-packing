@@ -28,7 +28,7 @@ handle_signal() {
 
 trap 'handle_signal' INT TERM
 
-BASE_URL="https://storage.lczero.org/files/training_data/test91/"
+BASE_URL="https://data.lczero.org/files/training_data/test91/"
 DATA_DIR="./data"
 BINPACK_DIR="./binpacks"
 SYZYGY_PATH=$1
