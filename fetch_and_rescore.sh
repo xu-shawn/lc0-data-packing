@@ -160,8 +160,14 @@ for TARBALL in $TARBALLS; do
 
     # Publish the binpack atomically only after a full, successful rescore, then
     # mark success. Until this point BINPACK_PATH never exists, so a partial
-    # rescore can never be mistaken for a finished one.
-    mv "${BINPACK_PATH}.partial" "$BINPACK_PATH"
+    # rescore can never be mistaken for a finished one. Empty/stub tarballs (just
+    # a LICENSE, no games) produce no .partial file; that's still a complete
+    # result, so mark them done with no binpack rather than failing.
+    if [ -f "${BINPACK_PATH}.partial" ]; then
+        mv "${BINPACK_PATH}.partial" "$BINPACK_PATH"
+    else
+        echo "No positions in ${TARBALL} (empty/stub tarball); no binpack produced."
+    fi
     touch "$DONE_FLAG"
 
     echo "Cleaning up..."
