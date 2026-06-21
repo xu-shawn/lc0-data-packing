@@ -28,7 +28,9 @@ handle_signal() {
 
 trap 'handle_signal' INT TERM
 
-BASE_URL="https://data.lczero.org/files/training_data/test91/"
+BASE_URL="https://data.lczero.org/files/training_data/test90/"
+FIRST_TAR="training-run3-test90-20250922-1817.tar"
+LAST_TAR="training-run3-test90-20251106-0917.tar"
 DATA_DIR="./data"
 BINPACK_DIR="./binpacks"
 SYZYGY_PATH=$1
@@ -46,7 +48,8 @@ echo "Fetching list of tarballs from $BASE_URL..."
 TARBALLS=$(curl -s "$BASE_URL" \
     | grep -oE 'href="[^"]+\.tar"' \
     | sed -E 's/href="([^"]+)"/\1/' \
-    | sort -r)
+    | sort \
+    | awk -v first="$FIRST_TAR" -v last="$LAST_TAR" 'first <= $0 && $0 <= last')
 
 if [ -z "$TARBALLS" ]; then
     echo "No tarballs found at $BASE_URL"
